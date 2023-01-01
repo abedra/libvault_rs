@@ -44,6 +44,17 @@ pub trait VaultClient {
     fn base_url(&self) -> String;
 }
 
+pub struct AuthenticatedVaultClient {
+    pub client: Box<dyn VaultClient>,
+    pub token: String
+}
+
+impl AuthenticatedVaultClient {
+    pub fn new(client: Box<dyn VaultClient>, token: String) -> Self {
+        Self { client, token }
+    }
+}
+
 pub struct VaultHttpClient {
     client: Client,
     host: String,

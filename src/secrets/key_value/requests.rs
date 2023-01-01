@@ -1,5 +1,4 @@
-use crate::client::vault::VaultClient;
-
+use crate::client::vault::AuthenticatedVaultClient;
 use super::responses::{KeyValueV1Response, KeyValueResponse, KeyValueV2Response};
 
 pub enum KeyValueVersion {
@@ -17,8 +16,8 @@ impl KeyValue {
         Self { version, mount: mount.into() }
     }
 
-    pub async fn read(&self, vault_client: &impl VaultClient, token: String, path: &str) -> KeyValueResponse {
-        let response = vault_client.read(self.url(vault_client, path), Some(token)).await;
+    pub async fn read(&self, vault_client: &AuthenticatedVaultClient, path: &str) -> KeyValueResponse {
+        let response = vault_client.client.read(self.url(vault_client.client.base_url(), path), Some(vault_client.token.clone())).await;
         match self.version {
             KeyValueVersion::One => {
                 let derived: KeyValueV1Response = serde_json::from_value(response).unwrap();
@@ -31,10 +30,10 @@ impl KeyValue {
         }
     }
 
-    fn url(&self, client: &impl VaultClient, path: &str) -> String {
+    fn url(&self, base_url: String, path: &str) -> String {
         match self.version {
-            KeyValueVersion::One => format!("{}/{}/{}", client.base_url(), self.mount, path),
-            KeyValueVersion::Two => format!("{}/{}/data/{}", client.base_url(), self.mount, path),
+            KeyValueVersion::One => format!("{}/{}/{}", base_url, self.mount, path),
+            KeyValueVersion::Two => format!("{}/{}/data/{}", base_url, self.mount, path),
         }
     }
 }
@@ -42,12 +41,9 @@ impl KeyValue {
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
-
     use futures::{future::BoxFuture, FutureExt};
     use serde_json::json;
-
-    use crate::{client::vault::{VaultClient, Parameters}, secrets::key_value::responses::KeyValueResponse};
-
+    use crate::{client::vault::{VaultClient, Parameters, AuthenticatedVaultClient}, secrets::key_value::responses::KeyValueResponse};
     use super::{KeyValue, KeyValueVersion};
 
     #[derive(Default)]
@@ -121,11 +117,12 @@ mod test {
     #[tokio::test]
     async fn v1_success() {
         let vault_client: V1Client = V1Client::default();
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(Box::new(vault_client), "token".into());
         let key_value: KeyValue = KeyValue::new(KeyValueVersion::One, "secrets");
         let expected: KeyValueResponse = KeyValueResponse { 
             data: HashMap::from([("foo".into(), "bar".into())])
         };
-        let actual: KeyValueResponse = key_value.read(&vault_client, "test".into(), "test").await;
+        let actual: KeyValueResponse = key_value.read(&authenticated_client, "test").await;
 
         assert_eq!(expected, actual);
     }
@@ -133,11 +130,12 @@ mod test {
     #[tokio::test]
     async fn v2_success() {
         let vault_client: V2Client = V2Client::default();
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(Box::new(vault_client), "token".into());
         let key_value: KeyValue = KeyValue::new(KeyValueVersion::Two, "secrets");
         let expected: KeyValueResponse = KeyValueResponse { 
             data: HashMap::from([("foo".into(), "bar".into())])
         };
-        let actual: KeyValueResponse = key_value.read(&vault_client, "test".into(), "test").await;
+        let actual: KeyValueResponse = key_value.read(&authenticated_client, "test").await;
 
         assert_eq!(expected, actual);
     }
