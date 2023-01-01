@@ -1,9 +1,6 @@
 use std::collections::HashMap;
-
 use serde::Serialize;
-
 use crate::client::vault::{VaultClient, Parameters, ParameterValue};
-
 use super::responses::ApproleLoginResponse;
 
 #[derive(Debug, Serialize)]
@@ -20,9 +17,9 @@ impl ApproleCredentials {
 
 impl Into<Parameters> for ApproleCredentials {
     fn into(self) -> Parameters {
-        let mut parameter_map: HashMap<String, ParameterValue> = HashMap::new();
-        parameter_map.insert("role_id".to_string(), ParameterValue::String(self.role_id));
-        parameter_map.insert("secret_id".to_string(), ParameterValue::String(self.secret_id));
+        let mut parameter_map: HashMap<&str, ParameterValue> = HashMap::new();
+        parameter_map.insert("role_id", ParameterValue::String(self.role_id));
+        parameter_map.insert("secret_id", ParameterValue::String(self.secret_id));
         Parameters::new(parameter_map)
     }
 }

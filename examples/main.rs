@@ -1,4 +1,4 @@
-use libvault_rs::{client::vault::{VaultHttpClient}, auth::{approle::requests::{ApproleCredentials, login}}};
+use vaultrs::{client::vault::VaultHttpClient, auth::approle::requests::{ApproleCredentials, login}};
 use reqwest::Client;
 
 #[tokio::main]

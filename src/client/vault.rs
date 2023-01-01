@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use futures::{future::BoxFuture, FutureExt};
 use reqwest::{Client, Body, header::HeaderMap};
 use serde::Serialize;
@@ -24,11 +23,11 @@ impl Serialize for ParameterValue {
 
 #[derive(Serialize, Default, Debug)]
 pub struct Parameters {
-    pub value: HashMap<String, ParameterValue>
+    pub value: HashMap<&'static str, ParameterValue>
 }
 
 impl Parameters {
-    pub fn new(value: HashMap<String, ParameterValue>) -> Self {
+    pub fn new(value: HashMap<&'static str, ParameterValue>) -> Self {
         Self { value }
     }
 }

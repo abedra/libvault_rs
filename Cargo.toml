@@ -1,7 +1,9 @@
 [package]
-name = "libvault_rs"
-version = "0.1.0"
+name = "vaultrs"
+version = "0.0.1"
 edition = "2021"
+authors = ["Aaron Bedra <aaron@aaronbedra.com>"]
+license = "MIT"
 
 [dependencies]
 reqwest = { version = "0.11.11", features = ["json"] }
