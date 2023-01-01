@@ -4,6 +4,12 @@ version = "0.0.1"
 edition = "2021"
 authors = ["Aaron Bedra <aaron@aaronbedra.com>"]
 license = "MIT"
+description = "A Rust library for Hashicorp Vault"
+homepage = "https://github.com/abedra/vaultrs"
+documentation = "https://docs.rs/vaultrs"
+repository = "https://github.com/abedra/vaultrs"
+readme = "README.md"
+
 
 [dependencies]
 reqwest = { version = "0.11.11", features = ["json"] }
