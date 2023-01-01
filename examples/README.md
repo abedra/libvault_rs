@@ -11,9 +11,16 @@ docker-compose up --build
 
 Set `VAULT_ADDR` and `VAULT_TOKEN`:
 
+*nix
 ```sh
 export VAULT_ADDR=http://localhost:8200
 export VAULT_TOKEN=vault-plaintext-root-token
+```
+
+powershell
+```powershell
+$env:VAULT_ADDR="http://localhost:8200"
+$env:VAULT_TOKEN=vault-plaintext-root-token"
 ```
 
 Now run the following commands to setup your local vault instance:
@@ -36,9 +43,16 @@ vault write -f auth/approle/role/client/secret-id
 
 Finally, set the `ROLE_ID` and `SECRET_ID` environment variables:
 
+*nix
 ```sh
 export ROLE_ID=<role id>
 export SECRET_ID=<secret id>
+```
+
+powershell
+```powershell
+$env:ROLE_ID=<role id>
+$env:SECRET_ID=<secret id>
 ```
 
 ## Running the examples
