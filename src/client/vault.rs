@@ -1,48 +1,58 @@
 use futures::{future::BoxFuture, FutureExt};
+use reqwest::Client;
 
 pub trait VaultClient {
-    fn request(&self, url: String) -> BoxFuture<serde_json::Value>;
+    fn read(&self, url: String) -> BoxFuture<serde_json::Value>;
+    
+    fn base_url(&self) -> String;
 }
 
 pub struct VaultHttpClient {
+    client: Client,
     host: String,
     port: u16,
     tls: bool,
-    verify_tls: bool,
-    namespace: String
+    namespace: Option<String>
 }
 
 impl VaultHttpClient {
     pub fn new(
+        client: Client,
         host: impl Into<String>, 
         port: u16, 
         tls: bool, 
-        verify_tls: bool,
-        namespace: impl Into<String>,
+        namespace: Option<impl Into<String>>,
     ) -> Self {
-        Self { 
+        Self {
+            client,
             host: host.into(), 
             port,
             tls,
-            verify_tls,
-            namespace: namespace.into()
+            namespace: match namespace {
+                Some(value) => Some(value.into()),
+                None => None,
+            }
         }
     }
+}
 
-    pub fn base_url(&self) -> String {
+impl VaultClient for VaultHttpClient {
+    fn read(&self, url: String) -> BoxFuture<serde_json::Value> {
+        async {
+            let mut request = self.client.get(url);
+            request = match &self.namespace {
+                Some(value) => request.header("X-Vault-Namespace", value),
+                None => request,
+            };
+            request.send().await.unwrap().json().await.unwrap()
+        }.boxed()
+    }
+
+    fn base_url(&self) -> String {
         let protocol = match self.tls {
             true => "https",
             false => "http",
         };
         format!("{}://{}:{}/v1", protocol, self.host, self.port)
-    }
-}
-
-impl VaultClient for VaultHttpClient {
-    fn request(&self, url: String) -> BoxFuture<serde_json::Value> {
-        async {
-            let response: serde_json::Value = reqwest::get(url).await.unwrap().json().await.unwrap();
-            response
-        }.boxed()
     }
 }
