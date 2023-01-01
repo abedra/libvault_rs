@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct MfaRequirement {
     pub mfa_request_id: String,
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 pub struct Auth {
     pub accessor: String,
     pub client_token: String,
@@ -25,7 +25,7 @@ pub struct Auth {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct ApproleLoginResponse {
     pub auth: Auth,
     pub data: Option<HashMap<String, String>>,
