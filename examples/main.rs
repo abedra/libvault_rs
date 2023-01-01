@@ -1,3 +1,5 @@
+use std::env;
+
 use vaultrs::{
     client::vault::VaultHttpClient, 
     auth::approle::requests::{ApproleCredentials, login}, 
@@ -15,8 +17,10 @@ async fn main() {
         false,
         None as Option<String>
     );
-
-    let approle_credentials = ApproleCredentials::new("9d480db6-4c9d-db81-5044-aa3c535298cf", "e06f16eb-e366-8200-9e24-0524242dccd3");
+    
+    let role_id = env::var("ROLE_ID").expect("ROLE_ID not set");
+    let secret_id = env::var("SECRET_ID").expect("SECRET_ID not set");
+    let approle_credentials = ApproleCredentials::new(role_id, secret_id);
     let response = login(&vault_client, approle_credentials).await;
     let token: String = response.auth.client_token;
     
