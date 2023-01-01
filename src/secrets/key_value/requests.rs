@@ -17,7 +17,7 @@ impl KeyValue {
         Self { version, mount: mount.into() }
     }
 
-    pub async fn read(&self, vault_client: &dyn VaultClient, token: String, path: &str) -> KeyValueResponse {
+    pub async fn read(&self, vault_client: &impl VaultClient, token: String, path: &str) -> KeyValueResponse {
         let response = vault_client.read(self.url(vault_client, path), Some(token)).await;
         match self.version {
             KeyValueVersion::One => {
@@ -31,7 +31,7 @@ impl KeyValue {
         }
     }
 
-    fn url(&self, client: &dyn VaultClient, path: &str) -> String {
+    fn url(&self, client: &impl VaultClient, path: &str) -> String {
         match self.version {
             KeyValueVersion::One => format!("{}/{}/{}", client.base_url(), self.mount, path),
             KeyValueVersion::Two => format!("{}/{}/data/{}", client.base_url(), self.mount, path),

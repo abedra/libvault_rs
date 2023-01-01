@@ -5,13 +5,10 @@ use libvault_rs::{
     auth::approle::requests::{ApproleCredentials, login}, 
     secrets::key_value::requests::{KeyValue, KeyValueVersion}
 };
-use reqwest::Client;
 
 #[tokio::main]
 async fn main() {
-    let client: Client = Client::new();
     let vault_client: VaultHttpClient = VaultHttpClient::new(
-        client,
         "localhost",
         8200,
         false,

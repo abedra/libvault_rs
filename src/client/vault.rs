@@ -54,14 +54,13 @@ pub struct VaultHttpClient {
 
 impl VaultHttpClient {
     pub fn new(
-        client: Client,
         host: impl Into<String>, 
         port: u16, 
         tls: bool, 
         namespace: Option<impl Into<String>>,
     ) -> Self {
         Self {
-            client,
+            client: Client::new(),
             host: host.into(), 
             port,
             tls,
