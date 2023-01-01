@@ -1,4 +1,4 @@
-use libvault_rs::{client::vault::{VaultHttpClient, VaultClient}, sys::{requests::health_request, responses::HealthResponse}};
+use libvault_rs::{client::vault::{VaultHttpClient}, auth::{approle::requests::{ApproleCredentials, login}}};
 use reqwest::Client;
 
 #[tokio::main]
@@ -11,6 +11,8 @@ async fn main() {
         false,
         None as Option<String>
     );
-    let health_response = health_request(&vault_client).await;
-    println!("{:#?}", health_response);
+
+    let approle_credentials = ApproleCredentials::new("9d480db6-4c9d-db81-5044-aa3c535298cf", "e06f16eb-e366-8200-9e24-0524242dccd3");
+    let response = login(&vault_client, approle_credentials).await;
+    println!("{}", response.auth.client_token);
 }
