@@ -16,7 +16,7 @@ pub struct KeyValueV1Response {
     pub data: HashMap<String, String>
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct KeyValueResponse {
     pub data: HashMap<String, String>
 }

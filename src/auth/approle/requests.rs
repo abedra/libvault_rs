@@ -36,7 +36,7 @@ mod test {
 
     use futures::{future::BoxFuture, FutureExt};
     use serde_json::json;
-    use crate::{client::vault::VaultClient, auth::approle::responses::{ApproleLoginResponse, Auth}};
+    use crate::{client::vault::{VaultClient, Parameters, ParameterValue}, auth::approle::responses::{ApproleLoginResponse, Auth}};
     use super::{ApproleCredentials, login};
 
     #[derive(Default)]
@@ -87,6 +87,15 @@ mod test {
         fn base_url(&self) -> String {
             "test".to_string()
         }
+    }
+
+    #[test]
+    fn parameterization() {
+        let approle_credentials: ApproleCredentials = ApproleCredentials::new("role_id", "secret_id");
+        let expected: Parameters = Parameters::new(HashMap::from([("role_id", ParameterValue::String("role_id".into())), ("secret_id", ParameterValue::String("secret_id".into()))]));
+        let actual: Parameters = approle_credentials.into();
+
+        assert_eq!(expected, actual);
     }
 
     #[tokio::test]

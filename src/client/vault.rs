@@ -3,7 +3,7 @@ use futures::{future::BoxFuture, FutureExt};
 use reqwest::{Client, Body, header::HeaderMap};
 use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParameterValue {
     Int(i32),
     Str(&'static str),
@@ -21,7 +21,7 @@ impl Serialize for ParameterValue {
     }
 }
 
-#[derive(Serialize, Default, Debug)]
+#[derive(Serialize, Default, Debug, PartialEq)]
 pub struct Parameters {
     pub value: HashMap<&'static str, ParameterValue>
 }
