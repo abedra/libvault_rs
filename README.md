@@ -1,4 +1,4 @@
-[![Test Status](https://github.com/abedra/libvault_rs/workflows/Rust/badge.svg?event=push)](https://github.com/abedra/libvault_rs/actions)
+[![Test Status](https://github.com/abedra/libvault_rs/workflows/tests/badge.svg?event=push)](https://github.com/abedra/libvault_rs/actions)
 [![Crate](https://img.shields.io/crates/v/libvault_rs.svg)](https://crates.io/crates/libvault_rs)
 [![API](https://docs.rs/libvault_rs/badge.svg)](https://docs.rs/libvault_rs)
 
