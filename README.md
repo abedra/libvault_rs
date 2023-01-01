@@ -1,4 +1,4 @@
-# vaultrs
+# libvault_rs
 
 A Rust library for [Hashicorp Vault](https://www.vaultproject.io/)
 
@@ -8,5 +8,5 @@ Add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-vaultrs = "0.0.1"
+libvault_rs = "0.0.1"
 ```

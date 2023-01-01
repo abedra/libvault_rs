@@ -1,6 +1,6 @@
 use std::env;
 
-use vaultrs::{
+use libvault_rs::{
     client::vault::VaultHttpClient, 
     auth::approle::requests::{ApproleCredentials, login}, 
     secrets::key_value::requests::{KeyValue, KeyValueVersion}

@@ -1,13 +1,13 @@
 [package]
-name = "vaultrs"
+name = "libvault_rs"
 version = "0.0.1"
 edition = "2021"
 authors = ["Aaron Bedra <aaron@aaronbedra.com>"]
 license = "MIT"
 description = "A Rust library for Hashicorp Vault"
-homepage = "https://github.com/abedra/vaultrs"
-documentation = "https://docs.rs/vaultrs"
-repository = "https://github.com/abedra/vaultrs"
+homepage = "https://github.com/abedra/libvault_rs"
+documentation = "https://docs.rs/libvault_rs"
+repository = "https://github.com/abedra/libvault_rs"
 readme = "README.md"
 
 
