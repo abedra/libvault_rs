@@ -15,11 +15,11 @@ impl ApproleCredentials {
     }
 }
 
-impl Into<Parameters> for ApproleCredentials {
-    fn into(self) -> Parameters {
+impl From<ApproleCredentials> for Parameters {
+    fn from(approle_credentials: ApproleCredentials) -> Self {
         Parameters::new(HashMap::from([
-            ("role_id", ParameterValue::String(self.role_id)),
-            ("secret_id", ParameterValue::String(self.secret_id))
+            ("role_id", ParameterValue::String(approle_credentials.role_id)),
+            ("secret_id", ParameterValue::String(approle_credentials.secret_id))
         ]))
     }
 }

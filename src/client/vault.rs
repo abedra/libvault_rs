@@ -32,9 +32,9 @@ impl Parameters {
     }
 }
 
-impl Into<Body> for Parameters {
-    fn into(self) -> Body {
-        Body::from(serde_json::to_string(&self.value).unwrap())
+impl From<Parameters> for Body {
+    fn from(parameters: Parameters) -> Self {
+        Body::from(serde_json::to_string(&parameters.value).unwrap())
     }
 }
 
@@ -75,10 +75,7 @@ impl VaultHttpClient {
             host: host.into(), 
             port,
             tls,
-            namespace: match namespace {
-                Some(value) => Some(value.into()),
-                None => None,
-            }
+            namespace: namespace.map(|value| value.into())
         }
     }
 
