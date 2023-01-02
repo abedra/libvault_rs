@@ -32,23 +32,28 @@ impl KeyValue {
             )
             .await;
 
-        match self.version {
-            KeyValueVersion::One => {
-                let convert: Result<KeyValueV1Response, serde_json::Error> =
-                    serde_json::from_value(response);
-                match convert {
-                    Ok(value) => Ok(KeyValueResponse::new(value.data)),
-                    Err(e) => Err(VaultClientError::new(e.to_string())),
-                }
-            }
-            KeyValueVersion::Two => {
-                let convert: Result<KeyValueV2Response, serde_json::Error> =
-                    serde_json::from_value(response);
-                match convert {
-                    Ok(value) => Ok(KeyValueResponse::new(value.data.data)),
-                    Err(e) => Err(VaultClientError::new(e.to_string())),
-                }
-            }
+        match response {
+            Err(e) => Err(e),
+            Ok(value) => {
+                match self.version {
+                    KeyValueVersion::One => {
+                        let convert: Result<KeyValueV1Response, serde_json::Error> =
+                            serde_json::from_value(value);
+                        match convert {
+                            Ok(value) => Ok(KeyValueResponse::new(value.data)),
+                            Err(e) => Err(VaultClientError::new(e.to_string())),
+                        }
+                    }
+                    KeyValueVersion::Two => {
+                        let convert: Result<KeyValueV2Response, serde_json::Error> =
+                            serde_json::from_value(value);
+                        match convert {
+                            Ok(value) => Ok(KeyValueResponse::new(value.data.data)),
+                            Err(e) => Err(VaultClientError::new(e.to_string())),
+                        }
+                    }
+                }                        
+            },
         }
     }
 
@@ -81,11 +86,11 @@ mod test {
     }
 
     impl VaultClient for StubClient {
-        fn read(&self, _: String, _: Option<String>) -> BoxFuture<serde_json::Value> {
-            async { self.response.to_owned() }.boxed()
+        fn read(&self, _: String, _: Option<String>) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
+            async { Ok(self.response.to_owned()) }.boxed()
         }
 
-        fn create(&self, _: String, _: Option<String>, _: Parameters) -> BoxFuture<serde_json::Value> {
+        fn create(&self, _: String, _: Option<String>, _: Parameters) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
             unimplemented!()
         }
 

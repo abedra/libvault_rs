@@ -30,7 +30,10 @@ pub async fn login(
 ) -> Result<ApproleLoginResponse, VaultClientError> {
     let url = format!("{}/{}", vault_client.base_url(), "auth/approle/login");
     let response = vault_client.create(url, None, approle_credentials.into()).await;
-    serde_json::from_value(response).map_err(|e| VaultClientError::new(e.to_string()))
+    match response {
+        Err(e) => Err(e),
+        Ok(value) => serde_json::from_value(value).map_err(|e| VaultClientError::new(e.to_string())),
+    }
 }
 
 #[cfg(test)]
@@ -47,12 +50,12 @@ mod test {
     }
     
     impl VaultClient for ApproleClient {
-        fn read(&self, _: String, _: Option<String>) -> BoxFuture<serde_json::Value> {
+        fn read(&self, _: String, _: Option<String>) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
             unimplemented!()
         }
 
-        fn create(&self, _: String, _: Option<String>, _: crate::client::vault::Parameters) -> BoxFuture<serde_json::Value> {
-            async { self.response.to_owned() }.boxed()
+        fn create(&self, _: String, _: Option<String>, _: crate::client::vault::Parameters) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
+            async { Ok(self.response.to_owned()) }.boxed()
         }
 
         fn base_url(&self) -> String {

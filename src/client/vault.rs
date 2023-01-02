@@ -50,8 +50,8 @@ impl From<Parameters> for Body {
 }
 
 pub trait VaultClient {
-    fn read(&self, url: String, token: Option<String>) -> BoxFuture<serde_json::Value>;
-    fn create(&self, url: String, token: Option<String>, parameters: Parameters) -> BoxFuture<serde_json::Value>;
+    fn read(&self, url: String, token: Option<String>) -> BoxFuture<Result<serde_json::Value, VaultClientError>>;
+    fn create(&self, url: String, token: Option<String>, parameters: Parameters) -> BoxFuture<Result<serde_json::Value, VaultClientError>>;
     fn base_url(&self) -> String;
 }
 
@@ -103,22 +103,31 @@ impl VaultHttpClient {
 }
 
 impl VaultClient for VaultHttpClient {
-    fn read(&self, url: String, token: Option<String>) -> BoxFuture<serde_json::Value> {
+    fn read(&self, url: String, token: Option<String>) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
         async {
-            self.client.get(url)
-                .headers(self.build_headers(token))
-                .send().await.unwrap()
-                .json().await.unwrap()
+            match self.client.get(url).headers(self.build_headers(token)).send().await {
+                Ok(v) => {
+                    match v.json::<serde_json::Value>().await {
+                        Ok(v) => Ok(v),
+                        Err(e) => Err(VaultClientError::new(e.to_string())),
+                    }
+                },
+                Err(e) => Err(VaultClientError::new(e.to_string())),
+            }
         }.boxed()
     }
 
-    fn create(&self, url: String, token: Option<String>, parameters: Parameters) -> BoxFuture<serde_json::Value> {
+    fn create(&self, url: String, token: Option<String>, parameters: Parameters) -> BoxFuture<Result<serde_json::Value, VaultClientError>> {
         async {
-            self.client.post(url)
-                .headers(self.build_headers(token))
-                .body(parameters)
-                .send().await.unwrap()
-                .json().await.unwrap()
+            match self.client.post(url).headers(self.build_headers(token)).body(parameters).send().await {
+                Ok(v) => {
+                    match v.json::<serde_json::Value>().await {
+                        Ok(v) => Ok(v),
+                        Err(e) => Err(VaultClientError::new(e.to_string())),
+                    }
+                },
+                Err(e) => Err(VaultClientError::new(e.to_string())),
+            }            
         }.boxed()
     }
 
