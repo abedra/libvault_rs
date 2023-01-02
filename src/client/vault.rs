@@ -4,6 +4,17 @@ use reqwest::{Client, Body, header::HeaderMap};
 use serde::Serialize;
 
 #[derive(Debug, PartialEq)]
+pub struct VaultClientError {
+    pub error: String
+}
+
+impl VaultClientError {
+    pub fn new(error: String) -> Self {
+        Self { error }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ParameterValue {
     Int(i32),
     Str(&'static str),

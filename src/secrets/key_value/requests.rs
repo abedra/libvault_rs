@@ -1,4 +1,4 @@
-use crate::client::vault::AuthenticatedVaultClient;
+use crate::client::vault::{AuthenticatedVaultClient, VaultClientError};
 use super::responses::{KeyValueV1Response, KeyValueResponse, KeyValueV2Response};
 
 pub enum KeyValueVersion {
@@ -16,16 +16,26 @@ impl KeyValue {
         Self { version, mount: mount.into() }
     }
 
-    pub async fn read(&self, vault_client: &AuthenticatedVaultClient, path: &str) -> KeyValueResponse {
-        let response = vault_client.client.read(self.url(vault_client.client.base_url(), path), Some(vault_client.token.clone())).await;
-        match self.version {
+    pub async fn read(&self, vault_client: &AuthenticatedVaultClient, path: &str) -> Result<KeyValueResponse, VaultClientError> {
+        let response = vault_client
+            .client
+            .read(self.url(vault_client.client.base_url(), path), Some(vault_client.token.clone()))
+            .await;
+        
+            match self.version {
             KeyValueVersion::One => {
-                let derived: KeyValueV1Response = serde_json::from_value(response).unwrap();
-                KeyValueResponse::new(derived.data)
+                let convert: Result<KeyValueV1Response, serde_json::Error> = serde_json::from_value(response);
+                match convert {
+                    Ok(value) => Ok(KeyValueResponse::new(value.data)),
+                    Err(e) => Err(VaultClientError::new(e.to_string())),
+                }
             },
             KeyValueVersion::Two => {
-                let derived: KeyValueV2Response = serde_json::from_value(response).unwrap();
-                KeyValueResponse::new(derived.data.data)
+                let convert: Result<KeyValueV2Response, serde_json::Error> = serde_json::from_value(response);
+                match convert {
+                    Ok(value) => Ok(KeyValueResponse::new(value.data.data)),
+                    Err(e) => Err(VaultClientError::new(e.to_string())),
+                }
             }
         }
     }
@@ -43,13 +53,15 @@ mod test {
     use std::collections::HashMap;
     use futures::{future::BoxFuture, FutureExt};
     use serde_json::json;
-    use crate::{client::vault::{VaultClient, Parameters, AuthenticatedVaultClient}, secrets::key_value::responses::KeyValueResponse};
+    use crate::{client::vault::{VaultClient, Parameters, AuthenticatedVaultClient, VaultClientError}, secrets::key_value::responses::KeyValueResponse};
     use super::{KeyValue, KeyValueVersion};
 
     #[derive(Default)]
     struct V1Client {}
     #[derive(Default)]
     struct V2Client {}
+    #[derive(Default)]
+    struct InvalidResponseClient {}
 
     impl VaultClient for V1Client {
         fn read(&self, _: String, _: Option<String>) -> BoxFuture<serde_json::Value> {
@@ -114,15 +126,35 @@ mod test {
         }
     }
 
+    impl VaultClient for InvalidResponseClient {
+        fn read(&self, _: String, _: Option<String>) -> BoxFuture<serde_json::Value> {
+            async { json!({}) }.boxed()
+        }
+
+        fn create(&self, _: String, _: Option<String>, _: Parameters) -> BoxFuture<serde_json::Value> {
+            unimplemented!()
+        }
+
+        fn base_url(&self) -> String {
+            "test".into()
+        }
+    }
+
     #[tokio::test]
     async fn v1_success() {
         let vault_client: V1Client = V1Client::default();
-        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(Box::new(vault_client), "token".into());
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(
+            Box::new(vault_client), 
+            "token".into()
+        );
         let key_value: KeyValue = KeyValue::new(KeyValueVersion::One, "secrets");
         let expected: KeyValueResponse = KeyValueResponse { 
             data: HashMap::from([("foo".into(), "bar".into())])
         };
-        let actual: KeyValueResponse = key_value.read(&authenticated_client, "test").await;
+        let actual = key_value
+            .read(&authenticated_client, "test")
+            .await
+            .unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -130,12 +162,50 @@ mod test {
     #[tokio::test]
     async fn v2_success() {
         let vault_client: V2Client = V2Client::default();
-        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(Box::new(vault_client), "token".into());
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(
+            Box::new(vault_client), 
+            "token".into()
+        );
         let key_value: KeyValue = KeyValue::new(KeyValueVersion::Two, "secrets");
         let expected: KeyValueResponse = KeyValueResponse { 
             data: HashMap::from([("foo".into(), "bar".into())])
         };
-        let actual: KeyValueResponse = key_value.read(&authenticated_client, "test").await;
+        let actual: KeyValueResponse = key_value
+            .read(&authenticated_client, "test")
+            .await
+            .unwrap();
+
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn v1_deserialization_failure() {
+        let vault_client: InvalidResponseClient = InvalidResponseClient::default();
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(
+            Box::new(vault_client), 
+            "token".into()
+        );
+        let key_value: KeyValue = KeyValue::new(KeyValueVersion::One, "secrets");
+        let expected: Result<KeyValueResponse, VaultClientError> = Err(VaultClientError::new("missing field `data`".into()));
+        let actual = key_value
+            .read(&authenticated_client, "test")
+            .await;
+
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn v2_deserialization_failure() {
+        let vault_client: InvalidResponseClient = InvalidResponseClient::default();
+        let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(
+            Box::new(vault_client), 
+            "token".into()
+        );
+        let key_value: KeyValue = KeyValue::new(KeyValueVersion::Two, "secrets");
+        let expected: Result<KeyValueResponse, VaultClientError> = Err(VaultClientError::new("missing field `data`".into()));
+        let actual = key_value
+            .read(&authenticated_client, "test")
+            .await;
 
         assert_eq!(expected, actual);
     }
