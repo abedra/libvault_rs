@@ -19,7 +19,7 @@ async fn main() {
     let secret_id = env::var("SECRET_ID").expect("SECRET_ID not set");
     let approle_credentials = ApproleCredentials::new(role_id, secret_id);
     let response = login(&vault_client, approle_credentials).await;
-    let token: String = response.auth.client_token;
+    let token: String = response.unwrap().auth.client_token;
     let authenticated_client: AuthenticatedVaultClient = AuthenticatedVaultClient::new(Box::new(vault_client), token);
     
     let key_value: KeyValue = KeyValue::new(KeyValueVersion::Two, "secret");

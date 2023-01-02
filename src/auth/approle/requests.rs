@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serde::Serialize;
-use crate::client::vault::{VaultClient, Parameters, ParameterValue};
+use crate::client::vault::{VaultClient, Parameters, ParameterValue, VaultClientError};
 use super::responses::ApproleLoginResponse;
 
 #[derive(Debug, Serialize)]
@@ -24,64 +24,35 @@ impl From<ApproleCredentials> for Parameters {
     }
 }
 
-pub async fn login(vault_client: &impl VaultClient, approle_credentials: ApproleCredentials) -> ApproleLoginResponse {
+pub async fn login(
+    vault_client: &impl VaultClient,
+    approle_credentials: ApproleCredentials
+) -> Result<ApproleLoginResponse, VaultClientError> {
     let url = format!("{}/{}", vault_client.base_url(), "auth/approle/login");
     let response = vault_client.create(url, None, approle_credentials.into()).await;
-    serde_json::from_value(response).unwrap()
+    serde_json::from_value(response).map_err(|e| VaultClientError::new(e.to_string()))
 }
 
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
-
     use futures::{future::BoxFuture, FutureExt};
     use serde_json::json;
-    use crate::{client::vault::{VaultClient, Parameters, ParameterValue}, auth::approle::responses::{ApproleLoginResponse, Auth}};
+    use crate::{client::vault::{VaultClient, Parameters, ParameterValue, VaultClientError}, auth::approle::{test_helpers::{successful_login_response, successful_login_json_response}}};
     use super::{ApproleCredentials, login};
 
     #[derive(Default)]
-    struct ApproleClient {}
+    struct ApproleClient {
+        response: serde_json::Value
+    }
+    
     impl VaultClient for ApproleClient {
         fn read(&self, _: String, _: Option<String>) -> BoxFuture<serde_json::Value> {
             unimplemented!()
         }
 
         fn create(&self, _: String, _: Option<String>, _: crate::client::vault::Parameters) -> BoxFuture<serde_json::Value> {
-            let response = json!(
-                {
-                    "auth": {
-                      "accessor": "LsKyvlMAvGcQhktNAjZ9it8q",
-                      "client_token": "hvs.CAESINqsFsEB_CyrfrTzkOLf_eZbOpcvAlAr5Kh8ulWb6_HmGh4KHGh2cy5DclY5bm9aakJrMDBheTExYU1TSVQxanQ",
-                      "entity_id": "4dc20fd9-71e4-b61e-5907-f5926ccbf964",
-                      "lease_duration": 2764800,
-                      "metadata": {
-                        "role_name": "client"
-                      },
-                      "mfa_requirement": null,
-                      "num_uses": 0,
-                      "orphan": true,
-                      "policies": [
-                        "default",
-                        "example"
-                      ],
-                      "renewable": true,
-                      "token_policies": [
-                        "default",
-                        "example"
-                      ],
-                      "token_type": "service"
-                    },
-                    "data": null,
-                    "lease_duration": 0,
-                    "lease_id": "",
-                    "renewable": false,
-                    "request_id": "8ff6e17e-61b0-7a65-dcbc-6870b1fd8d1e",
-                    "warnings": null,
-                    "wrap_info": null
-                  }                  
-            );
-
-            async { response }.boxed()
+            async { self.response.to_owned() }.boxed()
         }
 
         fn base_url(&self) -> String {
@@ -92,41 +63,33 @@ mod test {
     #[test]
     fn parameterization() {
         let approle_credentials: ApproleCredentials = ApproleCredentials::new("role_id", "secret_id");
-        let expected: Parameters = Parameters::new(HashMap::from([("role_id", ParameterValue::String("role_id".into())), ("secret_id", ParameterValue::String("secret_id".into()))]));
-        let actual: Parameters = approle_credentials.into();
+        let expected: Parameters = Parameters::new(HashMap::from([
+            ("role_id", ParameterValue::String("role_id".into())),
+            ("secret_id", ParameterValue::String("secret_id".into()))
+        ]));
 
-        assert_eq!(expected, actual);
+        assert_eq!(expected, approle_credentials.into());
+    }
+
+    #[tokio::test]
+    async fn deserialization_failure() {
+        let vault_client: ApproleClient = ApproleClient { response: json!({}) };
+        let approle_credentials: ApproleCredentials = ApproleCredentials::new("role", "secret");
+
+        assert_eq!(
+            Err(VaultClientError::new("missing field `auth`".into())), 
+            login(&vault_client, approle_credentials).await
+        );
     }
 
     #[tokio::test]
     async fn login_successful() {
-        let vault_client: ApproleClient = ApproleClient::default();
+        let vault_client: ApproleClient = ApproleClient { response: successful_login_json_response() };
         let approle_credentials: ApproleCredentials = ApproleCredentials::new("role", "secret");
-        let expected: ApproleLoginResponse = ApproleLoginResponse { 
-            auth: Auth { 
-                accessor: "LsKyvlMAvGcQhktNAjZ9it8q".into(),
-                client_token: "hvs.CAESINqsFsEB_CyrfrTzkOLf_eZbOpcvAlAr5Kh8ulWb6_HmGh4KHGh2cy5DclY5bm9aakJrMDBheTExYU1TSVQxanQ".into(),
-                entity_id: "4dc20fd9-71e4-b61e-5907-f5926ccbf964".into(),
-                lease_duration: 2764800,
-                metadata: HashMap::from([("role_name".into(), "client".into())]),
-                mfa_requirement: None,
-                num_uses: 0,
-                orphan: true,
-                policies: vec!["default".into(), "example".into()],
-                renewable: true,
-                token_policies: vec!["default".into(), "example".into()],
-                token_type: "service".into() 
-            },
-            data: None,
-            lease_duration: 0,
-            lease_id: "".into(),
-            renewable: false,
-            request_id: "8ff6e17e-61b0-7a65-dcbc-6870b1fd8d1e".into(),
-            warnings: None,
-            wrap_info: None
-        };
-        let actual = login(&vault_client, approle_credentials).await;
         
-        assert_eq!(expected, actual);
+        assert_eq!(
+            Ok(successful_login_response()), 
+            login(&vault_client, approle_credentials).await
+        );
     }
 }
