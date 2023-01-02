@@ -12,5 +12,5 @@ Add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-libvault_rs = "0.0.1"
+libvault_rs = "0.0.3"
 ```
