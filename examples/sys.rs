@@ -1,6 +1,6 @@
 use libvault_rs::{
     client::vault::VaultHttpClient,
-    sys::requests::health_request,
+    sys::requests::{health, leader},
 };
 
 #[tokio::main]
@@ -12,5 +12,6 @@ async fn main() {
         None as Option<String>
     );
 
-    println!("{:#?}", health_request(&vault_client).await);
+    println!("{:#?}", health(&vault_client).await);
+    println!("{:#?}", leader(&vault_client).await);
 }

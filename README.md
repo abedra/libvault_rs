@@ -12,7 +12,7 @@ Add this to your `Cargo.toml`
 
 ```toml
 [dependencies]
-libvault_rs = "0.0.4"
+libvault_rs = "0.0.5"
 ```
 
 ## Feature Support
@@ -31,5 +31,6 @@ The following tables show support for each of the secret backends, auth methods,
 | System Backend              | Implemented        | Example            |
 |-----------------------------|--------------------|--------------------|
 | /sys/health                 | :white_check_mark: | :white_check_mark: |
+| /sys/leader                 | :white_check_mark: | :white_check_mark: |
 
 \* Requires an enterprise license and cannot be integration tested
