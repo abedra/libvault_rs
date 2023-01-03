@@ -19,17 +19,17 @@ libvault_rs = "0.0.4"
 
 The following tables show support for each of the secret backends, auth methods, and system endpoints. Because the surface area is so large, endpoints are implemented as needed. Pull requests are welcome. Feel free to file an issue or submit a pull request for additional support.
 
-| Secret Backend   | Implemented | Example |
-|------------------|-------------|-------- |
-| Key/Value V1     | 🚧         | ✅     |
-| Key/Value V2     | 🚧         | ✅     |
+| Secret Backend   | Implemented    | Example            |
+|------------------|----------------|--------------------|
+| Key/Value V1     | :construction: | :white_check_mark: |
+| Key/Value V2     | :construction: | :white_check_mark: |
 
-| Auth Method       | Implemented | Example |
-|-------------------|-------------|---------|
-| AppRole           | 🚧         | ✅      |
+| Auth Method       | Implemented    | Example            |
+|-------------------|----------------|--------------------|
+| AppRole           | :construction: | :white_check_mark: |
 
-| System Backend              | Implemented | Example |
-|-----------------------------|-------------|---------|
-| /sys/health                 | 🚧         | ⛔      |
+| System Backend              | Implemented        | Example            |
+|-----------------------------|--------------------|--------------------|
+| /sys/health                 | :white_check_mark: | :white_check_mark: |
 
 \* Requires an enterprise license and cannot be integration tested
